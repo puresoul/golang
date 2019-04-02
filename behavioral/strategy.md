@@ -54,7 +54,7 @@ mult.Operate(3, 5) // 15
 - Strategy pattern is similar to Template pattern except in its granularity.
 - Strategy pattern lets you change the guts of an object. Decorator pattern lets you change the skin.
 
-```
+```go
 package main
 
 import (
