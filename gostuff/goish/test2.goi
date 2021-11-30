@@ -1,0 +1,251 @@
+print(a, b = print(1,"hi"))
+
+print(1 and 0 or 3)
+print(5+6)
+
+inc = function(a)
+	return a+1
+end
+
+print(inc(42))
+
+print(a == 1 and 7 or 9)
+
+t = {
+	a = 1,
+	"__*&^" = 2,
+	c = {
+		d = function
+			return "hello world"
+		end
+	}
+}
+
+print(t.c.d())
+t.a = 42
+print(t)
+
+print("", t:keys())
+
+print(2*2+3)
+
+t = {
+	g = function
+		return "hello world"
+	end,
+}
+
+t.m = function(self)
+	return self:g()
+end
+
+print(t:m())
+
+s = "goodbye world"
+
+print(s:len())
+print(type(s))
+
+print([1,2,7])
+
+a = {}
+print(a)
+a:set("1", 1)
+print(a)
+
+b = {}
+a:set(b, 2)
+print(a)
+b:set("2", 2)
+print(a)
+
+l = [1, 2, 3]
+print(l)
+l:push(4)
+print(l)
+print(getprototype(l))
+print(l:pop())
+print(l)
+
+print("a" .. "b")
+
+len = "hi"
+print("yo", l:len())
+
+print("a,b,c":split(","))
+print("a,b,c":split(","):join(":"))
+
+c = sync.channel(10)
+c:write(1)
+c:write(2)
+c:write(3)
+
+print(c:read())
+print(c:read())
+print(c:read())
+
+hi = function(g)
+	print("hi")
+end
+
+g = sync.group()
+g:run(hi)
+g:run(hi)
+g:run(hi)
+g:wait()
+print("done")
+
+print(b:get("hi"))
+
+print(true and "yes" or "no")
+
+for 10 do(i)
+	print(i)
+end
+
+for [1,2,3] function(i, v)
+	print(i, ":", v)
+end
+
+for { tom = 1, dick = 2, harry = 43 } function(k, v)
+	print(k, "=>", v)
+end
+
+a = 1
+print(a=a+1)
+print(a=a+1)
+print(a=a+1)
+
+for 10 do(i)
+	if i == 5 then
+		break
+	end
+	print(i)
+end
+
+blink = sync.queue()
+blink:write(do print("hello world") end)
+blink:write(do print("hello world") end)
+blink:write(do print("hello world") end)
+print("and...")
+
+for blink do(fn)
+	print(fn, fn())
+end
+
+l = [1,2,3]
+print(l\0)
+
+m = { a = 1, b = { c = 4 } }
+
+print(m\"b"\"c")
+m\"b"\"c" = 5
+print(m\"b"\"c")
+
+print("length", #l, #m)
+
+
+print(0:max(2))
+
+print([2,4,6,8,3]:sort(do(a, b) return a < b end))
+
+print([[a
+`multi`
+line
+string
+]])
+
+print("abc":match("[aeiou]"))
+print("abc":match("[aeiou]"))
+
+function print("hi") end()
+
+print(getprototype(0).huge)
+print(getprototype(1.0).huge)
+
+print([]:extend(3))
+
+print((1+2)*3)
+print(3*(1+2))
+
+
+--[[
+now
+a multi
+line
+comment
+]]
+
+print([1,2,3]:insert(1, 7))
+print([1,2,3]:insert(0, 7))
+print([1,2,3]:insert(4, 7))
+print([1,2,3]:remove(0))
+print([1,2,3]:remove(1))
+print([1,2,3]:remove(3))
+l = [1,2,3]
+print(l:remove(2), l)
+
+a = { b = [ 1, 2, 3 ] }
+
+print(#a)
+
+if (a = { b = 1 }) and a.b == 1 then
+	print("yes")
+end
+
+f = function(a...)
+	print(a)
+end
+
+print([1,2,3]...)
+
+print("and", 1 << 2)
+
+print("hex", 0xFF)
+
+print()
+print()
+
+print(time.now():year())
+print("modulus", 18 % 3 == 0)
+
+a = {
+	eq = function(self, other)
+		return true
+	end,
+}
+
+b = {
+	eq = function(self, other)
+		return false
+	end,
+}
+
+print("eq", a == b)
+print("eq", b == a)
+
+print("inv", ~1)
+
+a = [ [ 1, 2, 3 ] ]
+print("len", #a\0)
+
+
+
+defer print("deferred!")
+defer print("deferred! 2")
+
+for 3 do(i)
+	defer print("defer", i)
+end
+
+
+print({ a = { b = [ 1, 2, 3 ]}}:json())
+
+catch do(s)
+	log("caught", s)
+end
+
+print(try do return status(nil), "hello" end())
+print(try do return status("wtf"), "world" end())
+
+

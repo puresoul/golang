@@ -1,0 +1,367 @@
+super   = getprototype(nil)
+integer = getprototype(0)
+decimal = getprototype(0.0)
+string  = getprototype("")
+list    = getprototype([])
+map     = getprototype({})
+stream  = getprototype(io.stdin)
+true    = 0 < 1
+false   = 1 < 0
+nil     = []:remove(0)
+ok      = status(nil)
+
+print = function(a...)
+	lock = sync.channel(1)
+	return function(a...)
+		for a do(i, v)
+			a\i = v:string()
+		end
+		lock:write()
+		io.stdout:write(a:join(" ").."\n")
+		io.stdout:flush()
+		lock:read()
+	end
+end()
+
+log = function
+	lock = sync.channel(1)
+	return function(a...)
+		a:shove(time.now():format(time.YMDHIS))
+		for a do(i, v)
+			a\i = v:string()
+		end
+		lock:write()
+		io.stderr:write(a:join(" ").."\n")
+		io.stderr:flush()
+		lock:read()
+	end
+end()
+
+is = function(class, object)
+	proto = getprototype(object)
+	if class == proto then
+		return true
+	end
+	if type(proto) == "list" then
+		for proto do(i, item)
+			if item == class then
+				return true
+			end
+		end
+	end
+	return false
+end
+
+sync.run = function(fn...)
+	g = sync.group()
+	for fn do(i, f)
+		g:run(f)
+	end
+	return g
+end
+
+test = function(name, fn)
+	catch do(err)
+		log(name, "fail", err)
+	end
+	fn()
+	log(name, "pass")
+end
+
+function()
+	p = super
+
+	p.type = function(any)
+		return type(any)
+	end
+
+	p.len = function(any)
+		return #any
+	end
+
+end()
+
+function()
+	p = integer
+
+	p.iterate = function(limit)
+		i = 0
+		return do
+			if i < limit then
+				n, i = i, i+1
+				return n
+			end
+		end
+	end
+
+	p.max = function(a, b)
+		return a > b and a or b
+	end
+
+	p.min = function(a, b)
+		return a < b and a or b
+	end
+
+	p.json = function(n)
+		return n:text()
+	end
+
+end()
+
+function()
+	p = decimal
+
+	p.max = function(a, b)
+		return a > b and a or b
+	end
+
+	p.min = function(a, b)
+		return a < b and a or b
+	end
+
+	p.json = function(n)
+		return n:text()
+	end
+
+end()
+
+function()
+	p = string
+
+	p.json = function(n)
+		return n:quote()
+	end
+
+end()
+
+function()
+	p = list
+
+	p.push = function(list, val)
+		return list:insert(#list, val)
+	end
+
+	p.pop = function(list)
+		return list:remove(#list-1)
+	end
+
+	p.shove = function(list, val)
+		return list:insert(0, val)
+	end
+
+	p.shift = function(list)
+		return list:remove(0)
+	end
+
+	p.clear = function(list)
+		for #list do
+			list:pop()
+		end
+	end
+
+	p.iterate = function(list)
+		i = 0
+		return do
+			if i < #list then
+				n, i = i, i+1
+				return n, list\n
+			end
+		end
+	end
+
+	p.extend = function(list, size, def)
+		while #list < size do
+			list:push(def)
+		end
+		return list
+	end
+
+	p.set = function(list, pos, val)
+		list\pos = val
+	end
+
+	p.get = function(list, pos)
+		return list\pos
+	end
+
+	p.max = function(a, b)
+		return #a > #b and a or b
+	end
+
+	p.min = function(a, b)
+		return #a < #b and a or b
+	end
+
+	p.json = function(l)
+		parts = []
+		for l do(i, item)
+			parts:push(item:json())
+		end
+		return ["[", parts:join(","), "]" ]:join()
+	end
+
+end()
+
+function()
+	p = map
+
+	p.iterate = function(m)
+		i = 0
+		keys = m:keys()
+		return do
+			if i < #keys then
+				n, i = i, i+1
+				key = keys\n
+				return key, m\key
+			end
+		end
+	end
+
+	p.set = function(m, pos, val)
+		m\pos = val
+	end
+
+	p.get = function(m, pos)
+		return m\pos
+	end
+
+	p.max = function(a, b)
+		return #a > #b and a or b
+	end
+
+	p.min = function(a, b)
+		return #a < #b and a or b
+	end
+
+	p.json = function(m)
+		parts = []
+		for m do(k, v)
+			kq = k:text():quote()
+			if v == nil then
+				parts:push(kq .. ": null")
+				return
+			end
+			if v.json <> nil then
+				parts:push(kq .. ":" .. v:json())
+				return
+			end
+		end
+		return "{" .. parts:join(",") .. "}"
+	end
+
+end()
+
+function()
+	ti = time.ticker(1000000)
+	tick = getprototype(ti)
+	ti:stop()
+
+	tick.iterate = function(t)
+		i = 0
+		return do
+			v = t:read()
+			if v <> nil then
+				n, i = i, i+1
+				return n, v
+			end
+			return nil
+		end
+	end
+
+end()
+
+function()
+	protoQueue = {
+
+		read = function(q)
+			(q\0):write()
+			job = (q\1):shift()
+			(q\0):read()
+			return job
+		end,
+
+		write = function(q, fn)
+			(q\0):write()
+			(q\1):push(fn)
+			(q\0):read()
+		end,
+
+		iterate = function(q)
+			(q\0):write()
+			jobs = (q\1)
+			q\1 = []
+			(q\0):read()
+			return do
+				return jobs:shift()
+			end
+		end,
+	}
+
+	sync.queue = function()
+		return setprototype([sync.channel(1), [] ], protoQueue)
+	end
+
+end()
+
+function()
+	p = getprototype(time.now())
+
+	p.json = function(t)
+		return t:text():json()
+	end
+
+end()
+
+function()
+	p = stream
+
+	p.readline = function(s)
+		line = []
+		while np, c = s:readrune() do
+			line:push(c)
+			if not c or c == '\n' then
+				break
+			end
+		end
+		return #line > 0, line:join()
+	end
+
+	p.iterate = function(s)
+		done = false
+		return do
+			if np, line = s:readline() then
+				return line
+			end
+			return nil
+		end
+	end
+
+end()
+
+
+function()
+	p = io
+
+	p.slurp = function(path)
+		if is, file = io.open(path, "r") then
+			if is, content = file:readall() then
+				file:close()
+				return is, content:text()
+			end
+		end
+		return is
+	end
+
+end()
+
+function()
+	p = getprototype(sync.channel(1))
+
+	p.iterate = function(chan)
+		return do
+			return chan:read()
+		end
+	end
+
+end()
+

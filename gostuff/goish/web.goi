@@ -1,0 +1,69 @@
+
+catch do(err)
+	log("abort", err)
+	exit(1)
+end
+
+config = try io.slurp("config.json"):parsejson()
+
+db = try sql.open("postgres", config.postgres)
+defer db:close()
+
+wtf = function(req, err)
+	log("client error", err)
+	req:write({ error = err:string() }:json())
+end
+
+http.serve(":3000", "static/", {
+
+	"/datasets" = function(req)
+
+		catch do(err)
+			wtf(req, err)
+		end
+
+		rs = try db:query([[
+			select * from datasets order by project, name, path
+		]])
+
+		defer rs:close()
+
+		items = []
+		for rs do(row)
+			row.baseline_date = row.baseline:date()
+			items:push(row)
+		end
+
+		req:write({ state = "ok", datasets = items }:json())
+
+	end,
+
+	"/browse" = function(req)
+
+		catch do(err)
+			wtf(req, err)
+		end
+
+		path = try req:get("path")
+
+		rs = try db:query([[
+			select * from paths
+				where path like $1::text and path ~ $2::text
+				order by path
+				limit 10
+			]],
+			path .. "%",
+			"^" .. path .. "/[^/]+$",
+		)
+
+		defer rs:close()
+
+		items = []
+		for rs do(row)
+			items:push(row)
+		end
+
+		req:write({ state = "ok", paths = items }:json())
+
+	end,
+})
